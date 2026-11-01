@@ -1,0 +1,93 @@
+{
+  "dataset": "https://huggingface.co/datasets/mariosyahirhalimm/loan_prediction_dataset/raw/main/loan_prediction_dataset.csv",
+  "rows_used": 614,
+  "target_distribution": {
+    "0": 192,
+    "1": 422
+  },
+  "selected_model": "RandomForest",
+  "selection_metric": "mean 5-fold cross-validation F1",
+  "models": {
+    "LogisticRegression": {
+      "cv_f1_mean": 0.8062118865511086,
+      "cv_roc_auc_mean": 0.7276423385916716,
+      "cv_accuracy_mean": 0.7290249433106577,
+      "test_accuracy": 0.8211382113821138,
+      "test_precision": 0.8705882352941177,
+      "test_recall": 0.8705882352941177,
+      "test_f1": 0.8705882352941177,
+      "test_roc_auc": 0.8572755417956656,
+      "confusion_matrix": [
+        [
+          27,
+          11
+        ],
+        [
+          11,
+          74
+        ]
+      ]
+    },
+    "DecisionTree": {
+      "cv_f1_mean": 0.8059864046383955,
+      "cv_roc_auc_mean": 0.6896112417041925,
+      "cv_accuracy_mean": 0.7250051535765821,
+      "test_accuracy": 0.7398373983739838,
+      "test_precision": 0.8441558441558441,
+      "test_recall": 0.7647058823529411,
+      "test_f1": 0.8024691358024691,
+      "test_roc_auc": 0.7611455108359134,
+      "confusion_matrix": [
+        [
+          26,
+          12
+        ],
+        [
+          20,
+          65
+        ]
+      ]
+    },
+    "RandomForest": {
+      "cv_f1_mean": 0.8326667400531857,
+      "cv_roc_auc_mean": 0.7401866379676569,
+      "cv_accuracy_mean": 0.7554937126365697,
+      "test_accuracy": 0.8211382113821138,
+      "test_precision": 0.8461538461538461,
+      "test_recall": 0.9058823529411765,
+      "test_f1": 0.875,
+      "test_roc_auc": 0.8188854489164088,
+      "confusion_matrix": [
+        [
+          24,
+          14
+        ],
+        [
+          8,
+          77
+        ]
+      ]
+    },
+    "ExtraTrees": {
+      "cv_f1_mean": 0.805015887267205,
+      "cv_roc_auc_mean": 0.7047657820952165,
+      "cv_accuracy_mean": 0.7229231086373943,
+      "test_accuracy": 0.8048780487804879,
+      "test_precision": 0.8426966292134831,
+      "test_recall": 0.8823529411764706,
+      "test_f1": 0.8620689655172413,
+      "test_roc_auc": 0.86656346749226,
+      "confusion_matrix": [
+        [
+          24,
+          14
+        ],
+        [
+          10,
+          75
+        ]
+      ]
+    }
+  },
+  "note": "Educational benchmark only. The public dataset is small and historical; this is not a bank underwriting model."
+}
