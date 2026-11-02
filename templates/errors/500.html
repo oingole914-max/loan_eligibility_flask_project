@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Service error — {{ app_name }}{% endblock %}
+{% block body_class %}error-page{% endblock %}
+{% block content %}
+<section class="error-section">
+  <div class="container">
+    <div class="error-card">
+      <span class="error-code">500</span>
+      <span class="error-icon error-icon-danger"><i class="bi bi-tools" aria-hidden="true"></i></span>
+      <h1>Something went wrong on our side</h1>
+      <p>The request could not be completed. Your session is still active; please try again. No internal error details are shown for security.</p>
+      <div class="error-actions">
+        <a class="btn btn-brand" href="{{ url_for('main.home') }}"><i class="bi bi-house" aria-hidden="true"></i> Back to home</a>
+        {% if current_user.is_authenticated %}
+        <a class="btn btn-ghost" href="{{ url_for('applications.history') }}">My applications</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
