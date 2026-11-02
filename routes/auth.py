@@ -20,11 +20,7 @@ from extensions import db
 from models import User
 from repositories import UserRepository
 from utils.security import is_safe_redirect_url
-from utils.validators import (
-    normalize_email,
-    validate_password,
-    validate_registration,
-)
+from utils.validators import normalize_email, validate_registration
 
 bp = Blueprint("auth", __name__)
 
