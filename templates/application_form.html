@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field_error, invalid_class, selected, checked %}
+
+{% block title %}Check eligibility — {{ app_name }}{% endblock %}
+{% block body_class %}application-page{% endblock %}
+
+{% block content %}
+<section class="page-section">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb page-breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.home') }}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Check eligibility</li>
+          </ol>
+        </nav>
+        <span class="section-kicker">New assessment</span>
+        <h1 class="page-title">Loan eligibility application</h1>
+        <p class="page-subtitle">Provide the 11 inputs used by the trained model. Your details are validated before the saved pipeline scores the application.</p>
+      </div>
+      <div class="page-head-meta">
+        <span class="meta-pill"><i class="bi bi-cpu" aria-hidden="true"></i> {{ model_info.model_name or 'Saved model' }}</span>
+        <span class="meta-pill"><i class="bi bi-shield-check" aria-hidden="true"></i> Stored privately</span>
+      </div>
+    </div>
+
+    <div class="row g-4 align-items-start">
+      <div class="col-lg-8">
+        <form method="post" action="{{ url_for('applications.apply') }}" class="application-form" data-loading-form data-application-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          {% if service_error %}
+          <div class="alert alert-danger app-alert" role="alert">
+            <i class="bi bi-exclamation-octagon-fill app-alert-icon" aria-hidden="true"></i>
+            <span>{{ service_error }}</span>
+          </div>
+          {% endif %}
+
+          {% if errors %}
+          <div class="alert alert-danger app-alert form-error-summary" role="alert">
+            <i class="bi bi-exclamation-octagon-fill app-alert-icon" aria-hidden="true"></i>
+            <div>
+              <strong>We could not submit this application.</strong>
+              <span>{{ errors|length }} field{{ 's' if errors|length != 1 else '' }} need{{ 's' if errors|length == 1 else '' }} attention. Review the highlighted items below.</span>
+            </div>
+          </div>
+          {% endif %}
+
+          <section class="form-card">
+            <div class="form-section-head">
+              <span class="section-icon"><i class="bi bi-person-vcard" aria-hidden="true"></i></span>
+              <div>
+                <h2>Applicant profile</h2>
+                <p>Personal and background details used by the model.</p>
+              </div>
+              <span class="section-step">01</span>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="applicantName" class="form-label">Applicant full name</label>
+                <input type="text" class="form-control{{ invalid_class(errors, 'applicant_name') }}" id="applicantName" name="applicant_name" value="{{ values.get('applicant_name', '') }}" required minlength="2" maxlength="120" autocomplete="name" placeholder="Name stored with this application" aria-describedby="applicantNameHelp">
+                <div class="form-text" id="applicantNameHelp">Used for your records and history search. It is not a model input.</div>
+                {{ field_error(errors, 'applicant_name') }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="gender" class="form-label">Gender</label>
+                <select class="form-select{{ invalid_class(errors, 'Gender') }}" id="gender" name="Gender" required>
+                  <option value="" disabled{{ selected('', values.get('Gender', '')) }}>Select gender</option>
+                  <option value="Male"{{ selected('Male', values.get('Gender', '')) }}>Male</option>
+                  <option value="Female"{{ selected('Female', values.get('Gender', '')) }}>Female</option>
+                </select>
+                {{ field_error(errors, 'Gender') }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="married" class="form-label">Marital status</label>
+                <select class="form-select{{ invalid_class(errors, 'Married') }}" id="married" name="Married" required>
+                  <option value="" disabled{{ selected('', values.get('Married', '')) }}>Select marital status</option>
+                  <option value="Yes"{{ selected('Yes', values.get('Married', '')) }}>Married</option>
+                  <option value="No"{{ selected('No', values.get('Married', '')) }}>Not married</option>
+                </select>
+                {{ field_error(errors, 'Married') }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="dependents" class="form-label">Dependents</label>
+                <select class="form-select{{ invalid_class(errors, 'Dependents') }}" id="dependents" name="Dependents" required>
+                  <option value="" disabled{{ selected('', values.get('Dependents', '')) }}>Select dependents</option>
+                  <option value="0"{{ selected('0', values.get('Dependents', '')) }}>0</option>
+                  <option value="1"{{ selected('1', values.get('Dependents', '')) }}>1</option>
+                  <option value="2"{{ selected('2', values.get('Dependents', '')) }}>2</option>
+                  <option value="3+"{{ selected('3+', values.get('Dependents', '')) }}>3 or more</option>
+                </select>
+                {{ field_error(errors, 'Dependents') }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="education" class="form-label">Education</label>
+                <select class="form-select{{ invalid_class(errors, 'Education') }}" id="education" name="Education" required>
+                  <option value="" disabled{{ selected('', values.get('Education', '')) }}>Select education</option>
+                  <option value="Graduate"{{ selected('Graduate', values.get('Education', '')) }}>Graduate</option>
+                  <option value="Not Graduate"{{ selected('Not Graduate', values.get('Education', '')) }}>Not graduate</option>
+                </select>
+                {{ field_error(errors, 'Education') }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="selfEmployed" class="form-label">Self-employment</label>
+                <select class="form-select{{ invalid_class(errors, 'Self_Employed') }}" id="selfEmployed" name="Self_Employed" required>
+                  <option value="" disabled{{ selected('', values.get('Self_Employed', '')) }}>Select employment type</option>
+                  <option value="No"{{ selected('No', values.get('Self_Employed', '')) }}>No — salaried</option>
+                  <option value="Yes"{{ selected('Yes', values.get('Self_Employed', '')) }}>Yes — self-employed</option>
+                </select>
+                {{ field_error(errors, 'Self_Employed') }}
+              </div>
+            </div>
+          </section>
+
+          <section class="form-card">
+            <div class="form-section-head">
+              <span class="section-icon"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
+              <div>
+                <h2>Income and loan request</h2>
+                <p>Monthly income and the loan amount in the dataset's unit.</p>
+              </div>
+              <span class="section-step">02</span>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="applicantIncome" class="form-label">Applicant monthly income</label>
+                <div class="input-group has-validation">
+                  <span class="input-group-text">₹</span>
+                  <input type="number" class="form-control{{ invalid_class(errors, 'ApplicantIncome') }}" id="applicantIncome" name="ApplicantIncome" value="{{ values.get('ApplicantIncome', '') }}" min="1" max="10000000" step="1" required placeholder="e.g. 5849" data-income-input>
+                </div>
+                <div class="form-text">Monthly income in rupees, before deductions.</div>
+                {{ field_error(errors, 'ApplicantIncome') }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="coapplicantIncome" class="form-label">Co-applicant monthly income</label>
+                <div class="input-group has-validation">
+                  <span class="input-group-text">₹</span>
+                  <input type="number" class="form-control{{ invalid_class(errors, 'CoapplicantIncome') }}" id="coapplicantIncome" name="CoapplicantIncome" value="{{ values.get('CoapplicantIncome', '') }}" min="0" max="10000000" step="1" required placeholder="0 if none" data-income-input>
+                </div>
+                <div class="form-text">Enter 0 when there is no co-applicant.</div>
+                {{ field_error(errors, 'CoapplicantIncome') }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="loanAmount" class="form-label">Loan amount</label>
+                <div class="input-group has-validation">
+                  <span class="input-group-text">₹</span>
+                  <input type="number" class="form-control{{ invalid_class(errors, 'LoanAmount') }}" id="loanAmount" name="LoanAmount" value="{{ values.get('LoanAmount', '') }}" min="1" max="10000" step="0.1" required placeholder="e.g. 128" data-loan-amount-input>
+                </div>
+                <div class="form-text">In thousands: <strong>128 = ₹1,28,000</strong>.</div>
+                {{ field_error(errors, 'LoanAmount') }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="loanTerm" class="form-label">Loan term</label>
+                <div class="input-group has-validation">
+                  <input type="number" class="form-control{{ invalid_class(errors, 'Loan_Amount_Term') }}" id="loanTerm" name="Loan_Amount_Term" value="{{ values.get('Loan_Amount_Term', '') }}" min="12" max="480" step="1" required placeholder="e.g. 360">
+                  <span class="input-group-text">months</span>
+                </div>
+                <div class="form-text">Common terms are 180 or 360 months.</div>
+                {{ field_error(errors, 'Loan_Amount_Term') }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="propertyArea" class="form-label">Property area</label>
+                <select class="form-select{{ invalid_class(errors, 'Property_Area') }}" id="propertyArea" name="Property_Area" required>
+                  <option value="" disabled{{ selected('', values.get('Property_Area', '')) }}>Select property area</option>
+                  <option value="Urban"{{ selected('Urban', values.get('Property_Area', '')) }}>Urban</option>
+                  <option value="Semiurban"{{ selected('Semiurban', values.get('Property_Area', '')) }}>Semiurban</option>
+                  <option value="Rural"{{ selected('Rural', values.get('Property_Area', '')) }}>Rural</option>
+                </select>
+                {{ field_error(errors, 'Property_Area') }}
+              </div>
+            </div>
+          </section>
+
+          <section class="form-card">
+            <div class="form-section-head">
+              <span class="section-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></span>
+              <div>
+                <h2>Credit history</h2>
+                <p>A binary indicator from the historical dataset. No credit bureau is contacted.</p>
+              </div>
+              <span class="section-step">03</span>
+            </div>
+
+            <div class="choice-grid">
+              <label class="choice-card">
+                <input type="radio" name="Credit_History" value="1" required{{ checked('1', values.get('Credit_History', '')) }}>
+                <span class="choice-check" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <span class="choice-body">
+                  <span class="choice-icon choice-icon-positive"><i class="bi bi-patch-check" aria-hidden="true"></i></span>
+                  <span>
+                    <strong>Meets historical guidelines</strong>
+                    <small>Credit history marked as satisfactory (value 1).</small>
+                  </span>
+                </span>
+              </label>
+              <label class="choice-card">
+                <input type="radio" name="Credit_History" value="0" required{{ checked('0', values.get('Credit_History', '')) }}>
+                <span class="choice-check" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <span class="choice-body">
+                  <span class="choice-icon choice-icon-negative"><i class="bi bi-exclamation-circle" aria-hidden="true"></i></span>
+                  <span>
+                    <strong>Does not meet historical guidelines</strong>
+                    <small>Credit history not marked as satisfactory (value 0).</small>
+                  </span>
+                </span>
+              </label>
+            </div>
+            {{ field_error(errors, 'Credit_History') }}
+          </section>
+
+          <div class="form-submit-bar">
+            <div class="submit-note">
+              <i class="bi bi-shield-lock" aria-hidden="true"></i>
+              <span>Submitted details are saved to your account history.</span>
+            </div>
+            <button class="btn btn-brand btn-lg" type="submit" data-submit-button>
+              <span class="btn-label"><i class="bi bi-stars" aria-hidden="true"></i> Assess eligibility</span>
+              <span class="btn-spinner spinner-border spinner-border-sm" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="col-lg-4">
+        <aside class="application-sidebar">
+          <div class="sidebar-card sidebar-summary">
+            <h2>Live application snapshot</h2>
+            <div class="preview-row">
+              <span>Household monthly income</span>
+              <strong id="incomePreview" aria-live="polite">—</strong>
+            </div>
+            <div class="preview-row">
+              <span>Requested loan</span>
+              <strong id="loanPreview" aria-live="polite">—</strong>
+            </div>
+            <div class="preview-row">
+              <span>Loan term</span>
+              <strong id="termPreview" aria-live="polite">—</strong>
+            </div>
+            <p class="preview-note">Calculated from the values you enter. The model receives the original numeric fields.</p>
+          </div>
+
+          <div class="sidebar-card sidebar-model">
+            <div class="sidebar-model-head">
+              <span class="model-orb"><i class="bi bi-cpu" aria-hidden="true"></i></span>
+              <div>
+                <span class="sidebar-label">Prediction engine</span>
+                <strong>{{ model_info.model_name or 'Saved model' }}</strong>
+              </div>
+            </div>
+            <ul class="sidebar-facts">
+              <li><span>Model inputs</span><strong>{{ model_info.feature_count or 11 }}</strong></li>
+              {% if performance.available %}
+              <li><span>Holdout accuracy</span><strong>{{ performance.accuracy|percent }}</strong></li>
+              <li><span>ROC-AUC</span><strong>{{ performance.roc_auc|percent }}</strong></li>
+              {% endif %}
+            </ul>
+            <p>The full preprocessing pipeline is loaded once from a trusted local pickle file. No model training happens during your request.</p>
+          </div>
+
+          <div class="sidebar-card sidebar-disclaimer">
+            <span class="sidebar-label"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Before you submit</span>
+            <p>This assessment is a preliminary statistical estimate for academic demonstration. It is not an approval, rejection, credit check or financial advice.</p>
+            <p class="mb-0">Do not enter real banking credentials or sensitive documents.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
