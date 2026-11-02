@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} — Understand your loan eligibility{% endblock %}
+{% block body_class %}home-page{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+  <div class="hero-grid-pattern" aria-hidden="true"></div>
+  <div class="container position-relative">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <span class="hero-kicker"><span class="pulse-dot" aria-hidden="true"></span> Machine-learning decision support</span>
+        <h1 class="hero-title">Clarity before you <span class="text-accent">apply.</span></h1>
+        <p class="hero-lead">
+          Estimate loan eligibility in seconds using a trained classification model.
+          {{ app_name }} evaluates applicant, income, loan and credit details — then explains
+          the result with a transparent model probability.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-accent btn-lg" href="{{ url_for('applications.apply') }}">
+            <i class="bi bi-clipboard2-check" aria-hidden="true"></i>
+            Check your eligibility
+          </a>
+          <a class="btn btn-hero-ghost btn-lg" href="#how-it-works">See how it works</a>
+        </div>
+        <div class="hero-assurance">
+          <span><i class="bi bi-shield-check" aria-hidden="true"></i> No credit bureau pull</span>
+          <span><i class="bi bi-lock" aria-hidden="true"></i> Password-protected history</span>
+          <span><i class="bi bi-graph-up" aria-hidden="true"></i> Probability, not guesswork</span>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="model-snapshot" data-reveal>
+          <div class="model-snapshot-head">
+            <div>
+              <span class="snapshot-label">Live model snapshot</span>
+              <h2 class="snapshot-title">{{ performance.selected_model if performance.available else (model_info.model_name or 'Saved model') }}</h2>
+            </div>
+            <span class="status-pill status-ready"><span class="pulse-dot" aria-hidden="true"></span> Ready</span>
+          </div>
+
+          {% if performance.available %}
+          <div class="snapshot-metrics">
+            <div class="snapshot-metric">
+              <span class="snapshot-metric-label">Accuracy</span>
+              <strong>{{ performance.accuracy|percent }}</strong>
+            </div>
+            <div class="snapshot-metric">
+              <span class="snapshot-metric-label">ROC-AUC</span>
+              <strong>{{ performance.roc_auc|percent }}</strong>
+            </div>
+            <div class="snapshot-metric">
+              <span class="snapshot-metric-label">F1 score</span>
+              <strong>{{ performance.f1|percent }}</strong>
+            </div>
+          </div>
+          <div class="snapshot-bars">
+            <div class="snapshot-bar-row">
+              <span>Accuracy</span>
+              <div class="snapshot-bar"><span style="width: {{ (performance.accuracy * 100)|round(1) }}%"></span></div>
+              <em>{{ performance.accuracy|percent }}</em>
+            </div>
+            <div class="snapshot-bar-row">
+              <span>ROC-AUC</span>
+              <div class="snapshot-bar"><span style="width: {{ (performance.roc_auc * 100)|round(1) }}%"></span></div>
+              <em>{{ performance.roc_auc|percent }}</em>
+            </div>
+          </div>
+          <p class="snapshot-foot">
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
+            Holdout-test results from {{ performance.rows_used }} historical records.
+            Selected by {{ performance.selection_metric }}.
+          </p>
+          {% else %}
+          <div class="snapshot-unavailable">
+            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+            <div>
+              <strong>Evaluation data unavailable</strong>
+              <p class="mb-0">The trained model is ready, but <code>model_metrics.json</code> could not be read.</p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="snapshot-floating-card" data-reveal>
+          <span class="floating-icon"><i class="bi bi-fingerprint" aria-hidden="true"></i></span>
+          <div>
+            <strong>{{ model_info.feature_count or 11 }} applicant signals</strong>
+            <span>used for each prediction</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="stats-strip" data-reveal>
+    <div class="stat-block">
+      <span class="stat-value">{{ performance.rows_used|number if performance.available else '—' }}</span>
+      <span class="stat-label">Historical records</span>
+    </div>
+    <div class="stat-block">
+      <span class="stat-value">{{ model_info.feature_count or 11 }}</span>
+      <span class="stat-label">Model inputs</span>
+    </div>
+    <div class="stat-block">
+      <span class="stat-value">{{ performance.comparison|length if performance.available else '—' }}</span>
+      <span class="stat-label">Algorithms compared</span>
+    </div>
+    <div class="stat-block">
+      <span class="stat-value">{{ performance.selected_model if performance.available else 'Ready' }}</span>
+      <span class="stat-label">Selected algorithm</span>
+    </div>
+    <div class="stat-block">
+      <span class="stat-value">{{ application_count if application_count is not none else '—' }}</span>
+      <span class="stat-label">Assessments saved</span>
+    </div>
+  </div>
+</div>
+
+<section class="section-space" id="how-it-works">
+  <div class="container">
+    <div class="section-heading text-center" data-reveal>
+      <span class="section-kicker">How it works</span>
+      <h2 class="section-title">From application details to a clear signal</h2>
+      <p class="section-subtitle">Three transparent steps, powered by a single saved pipeline that is loaded once — never trained during a request.</p>
+    </div>
+    <div class="row g-4 mt-2">
+      <div class="col-md-4" data-reveal>
+        <article class="process-card h-100">
+          <span class="step-number">01</span>
+          <span class="process-icon"><i class="bi bi-ui-checks" aria-hidden="true"></i></span>
+          <h3>Tell us about the application</h3>
+          <p>Complete 11 fields covering the applicant, household income, requested loan and credit history. Financial fields are validated before submission.</p>
+        </article>
+      </div>
+      <div class="col-md-4" data-reveal>
+        <article class="process-card h-100">
+          <span class="step-number">02</span>
+          <span class="process-icon"><i class="bi bi-cpu" aria-hidden="true"></i></span>
+          <h3>The saved pipeline scores it</h3>
+          <p>The persisted preprocessing and classification pipeline imputes and encodes the inputs exactly as it did during training, then estimates a probability.</p>
+        </article>
+      </div>
+      <div class="col-md-4" data-reveal>
+        <article class="process-card h-100">
+          <span class="step-number">03</span>
+          <span class="process-icon"><i class="bi bi-bar-chart-line" aria-hidden="true"></i></span>
+          <h3>Review, save and revisit</h3>
+          <p>See the eligibility outcome, model confidence and a full application summary. Every prediction is stored privately in your application history.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-space section-tinted">
+  <div class="container">
+    <div class="row g-4 align-items-end mb-4">
+      <div class="col-lg-7" data-reveal>
+        <span class="section-kicker">What the model sees</span>
+        <h2 class="section-title mb-0">Four groups of applicant information</h2>
+      </div>
+      <div class="col-lg-5" data-reveal>
+        <p class="section-subtitle mb-0">The model uses only the same 11 fields seen during training. Applicant names are stored for your records, but are not sent to the model.</p>
+      </div>
+    </div>
+    <div class="row g-4">
+      <div class="col-sm-6 col-xl-3" data-reveal>
+        <article class="feature-card h-100">
+          <span class="feature-icon"><i class="bi bi-person-vcard" aria-hidden="true"></i></span>
+          <h3>Applicant profile</h3>
+          <ul>
+            <li>Gender</li>
+            <li>Marital status</li>
+            <li>Dependents</li>
+            <li>Education</li>
+            <li>Self-employment</li>
+          </ul>
+        </article>
+      </div>
+      <div class="col-sm-6 col-xl-3" data-reveal>
+        <article class="feature-card h-100">
+          <span class="feature-icon"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
+          <h3>Household income</h3>
+          <ul>
+            <li>Applicant income</li>
+            <li>Co-applicant income</li>
+          </ul>
+          <p class="feature-note">Entered in the same monthly unit as the training dataset.</p>
+        </article>
+      </div>
+      <div class="col-sm-6 col-xl-3" data-reveal>
+        <article class="feature-card h-100">
+          <span class="feature-icon"><i class="bi bi-house-check" aria-hidden="true"></i></span>
+          <h3>Loan structure</h3>
+          <ul>
+            <li>Loan amount</li>
+            <li>Loan term</li>
+            <li>Property area</li>
+          </ul>
+        </article>
+      </div>
+      <div class="col-sm-6 col-xl-3" data-reveal>
+        <article class="feature-card h-100">
+          <span class="feature-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></span>
+          <h3>Credit signal</h3>
+          <ul>
+            <li>Credit history</li>
+          </ul>
+          <p class="feature-note">A binary indicator from the historical dataset — no bureau connection is made.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-space">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-6" data-reveal>
+        <span class="section-kicker">Built for understanding</span>
+        <h2 class="section-title">A preliminary signal — with the context to read it correctly</h2>
+        <p class="section-subtitle">
+          A prediction is a statistical estimate, not an approval or rejection. {{ app_name }} shows
+          the probability, the model used and the exact inputs behind each result so the outcome can
+          be examined rather than treated as a black box.
+        </p>
+        <div class="info-list">
+          <div class="info-list-item">
+            <span class="info-icon"><i class="bi bi-percent" aria-hidden="true"></i></span>
+            <div><strong>Both probability and confidence</strong><p>See the estimated eligibility probability and the probability attached to the predicted class.</p></div>
+          </div>
+          <div class="info-list-item">
+            <span class="info-icon"><i class="bi bi-journal-check" aria-hidden="true"></i></span>
+            <div><strong>Saved, searchable history</strong><p>Revisit past assessments, filter by outcome and review every input and timestamp.</p></div>
+          </div>
+          <div class="info-list-item">
+            <span class="info-icon"><i class="bi bi-shield-lock" aria-hidden="true"></i></span>
+            <div><strong>Account-based access</strong><p>Applications are visible only to their owner. Administrators have a separate, role-restricted view.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6" data-reveal>
+        <div class="disclaimer-panel">
+          <div class="disclaimer-head">
+            <span class="disclaimer-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+            <div>
+              <span class="section-kicker mb-1">Important disclaimer</span>
+              <h3 class="mb-0">This is an academic demonstration</h3>
+            </div>
+          </div>
+          <p>
+            The model was trained on a small, historical public dataset. It may encode biases present
+            in that data and does not assess your full financial circumstances. It must never be used
+            as the sole basis for a real lending decision.
+          </p>
+          <ul class="disclaimer-list">
+            <li>No real credit check, document verification or identity verification is performed.</li>
+            <li>No approval, interest rate, repayment schedule or loan offer is generated.</li>
+            <li>Consult a qualified lender for any real borrowing decision.</li>
+          </ul>
+          <a class="btn btn-outline-brand" href="{{ url_for('applications.apply') }}">Start an assessment <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-panel" data-reveal>
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          <span class="section-kicker section-kicker-light">Ready when you are</span>
+          <h2>Check eligibility with the full picture in view.</h2>
+          <p>Create a secure account, submit the 11 model inputs and receive a stored result with probability and timestamp.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+          {% if current_user.is_authenticated %}
+          <a class="btn btn-accent btn-lg w-100 w-lg-auto" href="{{ url_for('applications.apply') }}">New assessment <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+          {% else %}
+          <a class="btn btn-accent btn-lg w-100 w-lg-auto" href="{{ url_for('auth.register') }}">Create free account <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+          <p class="cta-small mb-0">Already registered? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
