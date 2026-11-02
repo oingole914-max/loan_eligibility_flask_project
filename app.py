@@ -8,7 +8,6 @@ or:
 from __future__ import annotations
 
 import logging
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -45,24 +44,16 @@ from utils.validators import (  # noqa: E402
     validate_password,
 )
 
-PUBLIC_ENDPOINTS = {
-    "main.home",
-    "main.health",
-    "auth.login",
-    "auth.register",
-    "auth.admin_login",
-    "static",
-}
-
-
 def create_app(config_class=Config) -> Flask:
     app = Flask(__name__, instance_relative_config=False)
     app.config.from_object(config_class)
 
-    if not app.config.get("SECRET_KEY"):
+    secret_key = app.config.get("SECRET_KEY") or ""
+    if len(secret_key) < 32 or secret_key.lower().startswith("replace-with"):
         raise RuntimeError(
-            "SECRET_KEY is not configured. Copy .env.example to .env and set a "
-            "long random SECRET_KEY before starting the application."
+            "SECRET_KEY is missing, too short, or still set to the example value. "
+            "Copy .env.example to .env and generate a random SECRET_KEY of at "
+            "least 32 characters before starting the application."
         )
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
@@ -324,7 +315,7 @@ def _register_cli(app: Flask) -> None:
 if __name__ == "__main__":
     application = create_app()
     application.run(
-        host=os.getenv("HOST", "127.0.0.1"),
-        port=int(os.getenv("PORT", "5000")),
+        host=application.config.get("HOST", "127.0.0.1"),
+        port=application.config.get("PORT", 5000),
         debug=application.config.get("DEBUG", False),
     )
