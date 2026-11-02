@@ -1,0 +1,256 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Admin dashboard — {{ app_name }}{% endblock %}
+{% block admin_bar_title %}Workspace overview{% endblock %}
+
+{% block content %}
+<div class="admin-page-head">
+  <div>
+    <span class="section-kicker">Operations</span>
+    <h1 class="admin-page-title">Eligibility dashboard</h1>
+    <p class="admin-page-subtitle">Live application totals, outcome distribution and the model's real evaluation results.</p>
+  </div>
+  <div class="admin-page-actions">
+    <a class="btn btn-ghost" href="{{ url_for('admin.applications') }}"><i class="bi bi-table" aria-hidden="true"></i> Manage applications</a>
+    <a class="btn btn-brand" href="{{ url_for('applications.apply') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> New assessment</a>
+  </div>
+</div>
+
+<div class="admin-stat-grid">
+  <article class="admin-stat-card">
+    <div class="admin-stat-top">
+      <span class="admin-stat-icon admin-stat-icon-navy"><i class="bi bi-collection" aria-hidden="true"></i></span>
+      <span class="admin-stat-tag">All time</span>
+    </div>
+    <span class="admin-stat-label">Total applications</span>
+    <strong class="admin-stat-value">{{ stats.total }}</strong>
+    <p class="admin-stat-foot">Stored prediction records</p>
+  </article>
+  <article class="admin-stat-card">
+    <div class="admin-stat-top">
+      <span class="admin-stat-icon admin-stat-icon-green"><i class="bi bi-check-circle" aria-hidden="true"></i></span>
+      <span class="admin-stat-tag">{{ stats.eligible_rate|percent if stats.eligible_rate is not none else '—' }}</span>
+    </div>
+    <span class="admin-stat-label">Eligible applications</span>
+    <strong class="admin-stat-value">{{ stats.eligible }}</strong>
+    <p class="admin-stat-foot">Classified as eligible by the model</p>
+  </article>
+  <article class="admin-stat-card">
+    <div class="admin-stat-top">
+      <span class="admin-stat-icon admin-stat-icon-red"><i class="bi bi-x-circle" aria-hidden="true"></i></span>
+      <span class="admin-stat-tag">{{ (1 - stats.eligible_rate)|percent if stats.eligible_rate is not none else '—' }}</span>
+    </div>
+    <span class="admin-stat-label">Not eligible applications</span>
+    <strong class="admin-stat-value">{{ stats.ineligible }}</strong>
+    <p class="admin-stat-foot">Classified as not eligible by the model</p>
+  </article>
+  <article class="admin-stat-card">
+    <div class="admin-stat-top">
+      <span class="admin-stat-icon admin-stat-icon-gold"><i class="bi bi-percent" aria-hidden="true"></i></span>
+      <span class="admin-stat-tag">Model output</span>
+    </div>
+    <span class="admin-stat-label">Average eligibility probability</span>
+    <strong class="admin-stat-value">{{ stats.average_probability|percent if stats.average_probability is not none else '—' }}</strong>
+    <p class="admin-stat-foot">Mean probability across saved applications</p>
+  </article>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-xl-5">
+    <section class="admin-card h-100">
+      <div class="admin-card-head">
+        <div>
+          <h2>Eligibility distribution</h2>
+          <p>Model outcomes across all saved applications.</p>
+        </div>
+        <span class="admin-card-badge">{{ stats.total }} total</span>
+      </div>
+      {% if stats.total %}
+      <div class="chart-wrap">
+        <div class="chart-canvas-wrap">
+          <canvas id="eligibilityChart"
+                  data-eligible="{{ stats.eligible }}"
+                  data-ineligible="{{ stats.ineligible }}"
+                  aria-label="Doughnut chart showing eligible and not eligible application counts"
+                  role="img"></canvas>
+          <div class="chart-center">
+            <strong>{{ stats.total }}</strong>
+            <span>applications</span>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item">
+            <span class="legend-dot legend-dot-green" aria-hidden="true"></span>
+            <div><strong>Eligible</strong><span>{{ stats.eligible }} application{{ 's' if stats.eligible != 1 else '' }}</span></div>
+            <em>{{ stats.eligible_rate|percent }}</em>
+          </div>
+          <div class="chart-legend-item">
+            <span class="legend-dot legend-dot-red" aria-hidden="true"></span>
+            <div><strong>Not eligible</strong><span>{{ stats.ineligible }} application{{ 's' if stats.ineligible != 1 else '' }}</span></div>
+            <em>{{ (1 - stats.eligible_rate)|percent }}</em>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state empty-state-compact">
+        <span class="empty-icon"><i class="bi bi-pie-chart" aria-hidden="true"></i></span>
+        <h3>No distribution yet</h3>
+        <p>Charts will populate after the first saved assessment. No placeholder values are shown.</p>
+        <a class="btn btn-brand btn-sm" href="{{ url_for('applications.apply') }}">Create an assessment</a>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="col-xl-7">
+    <section class="admin-card h-100">
+      <div class="admin-card-head">
+        <div>
+          <h2>Recent applications</h2>
+          <p>The latest eight prediction records.</p>
+        </div>
+        <a class="admin-text-link" href="{{ url_for('admin.applications') }}">View all <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+      </div>
+      {% if recent %}
+      <div class="table-responsive">
+        <table class="table app-table admin-recent-table align-middle">
+          <thead><tr><th scope="col">Applicant</th><th scope="col">Outcome</th><th scope="col" class="d-none d-md-table-cell">Loan</th><th scope="col" class="d-none d-sm-table-cell">Date</th><th scope="col" class="text-end">View</th></tr></thead>
+          <tbody>
+            {% for application in recent %}
+            <tr>
+              <td>
+                <div class="table-person">
+                  <span class="table-avatar" aria-hidden="true">{{ application.applicant_name|initials }}</span>
+                  <span><strong>{{ application.applicant_name }}</strong><small>{{ application.user.email if application.user else 'Account removed' }}</small></span>
+                </div>
+              </td>
+              <td><span class="result-badge {{ 'badge-eligible' if application.is_eligible else 'badge-ineligible' }}"><span class="badge-dot" aria-hidden="true"></span> {{ application.eligibility_label }}</span></td>
+              <td class="d-none d-md-table-cell">{{ application.LoanAmount|inr_thousands }}</td>
+              <td class="d-none d-sm-table-cell"><span class="table-date">{{ application.created_at|date }}<small>{{ application.created_at|datetime('%I:%M %p') }}</small></span></td>
+              <td class="text-end"><a class="btn btn-sm btn-table" href="{{ url_for('admin.application_detail', application_id=application.id) }}" aria-label="View {{ application.reference }}">View <i class="bi bi-arrow-right" aria-hidden="true"></i></a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state empty-state-compact">
+        <span class="empty-icon"><i class="bi bi-inbox" aria-hidden="true"></i></span>
+        <h3>No applications yet</h3>
+        <p>Recent submissions will appear here with their real model outcomes.</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<section class="admin-card model-performance-card" id="model-performance">
+  <div class="admin-card-head">
+    <div>
+      <h2>Model performance</h2>
+      <p>Actual evaluation values read from <code>model_metrics.json</code>. No metrics are generated in the dashboard.</p>
+    </div>
+    {% if performance.available %}
+    <span class="admin-card-badge admin-card-badge-strong"><i class="bi bi-cpu" aria-hidden="true"></i> {{ performance.selected_model }}</span>
+    {% endif %}
+  </div>
+
+  {% if performance.available %}
+  <div class="performance-meta">
+    <div class="performance-meta-item"><span>Selection metric</span><strong>{{ performance.selection_metric }}</strong></div>
+    <div class="performance-meta-item"><span>Dataset rows</span><strong>{{ performance.rows_used|number }}</strong></div>
+    <div class="performance-meta-item"><span>Input features</span><strong>{{ model_info.feature_count or 11 }}</strong></div>
+    <div class="performance-meta-item"><span>Runtime scikit-learn</span><strong>{{ model_info.sklearn_version }}</strong></div>
+  </div>
+
+  <div class="metric-tile-grid">
+    <div class="metric-tile">
+      <span>Accuracy</span>
+      <strong>{{ performance.accuracy|percent }}</strong>
+      <div class="metric-bar"><span style="width: {{ (performance.accuracy * 100)|round(1) }}%"></span></div>
+    </div>
+    <div class="metric-tile">
+      <span>Precision</span>
+      <strong>{{ performance.precision|percent }}</strong>
+      <div class="metric-bar"><span style="width: {{ (performance.precision * 100)|round(1) }}%"></span></div>
+    </div>
+    <div class="metric-tile">
+      <span>Recall</span>
+      <strong>{{ performance.recall|percent }}</strong>
+      <div class="metric-bar"><span style="width: {{ (performance.recall * 100)|round(1) }}%"></span></div>
+    </div>
+    <div class="metric-tile">
+      <span>F1 score</span>
+      <strong>{{ performance.f1|percent }}</strong>
+      <div class="metric-bar"><span style="width: {{ (performance.f1 * 100)|round(1) }}%"></span></div>
+    </div>
+    <div class="metric-tile">
+      <span>ROC-AUC</span>
+      <strong>{{ performance.roc_auc|percent }}</strong>
+      <div class="metric-bar"><span style="width: {{ (performance.roc_auc * 100)|round(1) }}%"></span></div>
+    </div>
+  </div>
+
+  <div class="row g-4 performance-detail-row">
+    <div class="col-lg-5">
+      <div class="confusion-card">
+        <div class="confusion-head">
+          <h3>Confusion matrix</h3>
+          <span>Holdout test set</span>
+        </div>
+        <div class="confusion-grid" role="table" aria-label="Confusion matrix for the selected model">
+          <span></span>
+          <span class="confusion-axis">Predicted not eligible</span>
+          <span class="confusion-axis">Predicted eligible</span>
+          <span class="confusion-axis confusion-axis-side">Actual not eligible</span>
+          <div class="confusion-cell confusion-cell-tn"><strong>{{ performance.confusion_matrix[0][0] }}</strong><span>True negative</span></div>
+          <div class="confusion-cell confusion-cell-fp"><strong>{{ performance.confusion_matrix[0][1] }}</strong><span>False positive</span></div>
+          <span class="confusion-axis confusion-axis-side">Actual eligible</span>
+          <div class="confusion-cell confusion-cell-fn"><strong>{{ performance.confusion_matrix[1][0] }}</strong><span>False negative</span></div>
+          <div class="confusion-cell confusion-cell-tp"><strong>{{ performance.confusion_matrix[1][1] }}</strong><span>True positive</span></div>
+        </div>
+        <p class="confusion-note">Counts come directly from the saved evaluation report, not from dashboard data.</p>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="comparison-card">
+        <div class="confusion-head">
+          <h3>Algorithm comparison</h3>
+          <span>Measured during training</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table app-table comparison-table align-middle">
+            <thead><tr><th scope="col">Model</th><th scope="col">CV F1</th><th scope="col">Test accuracy</th><th scope="col">Test F1</th><th scope="col">ROC-AUC</th></tr></thead>
+            <tbody>
+              {% for row in performance.comparison %}
+              <tr class="{{ 'selected-row' if row.selected }}">
+                <td><span class="model-name-cell">{{ row.name }}{% if row.selected %}<span class="selected-tag">Selected</span>{% endif %}</span></td>
+                <td>{{ row.cv_f1_mean|percent }}</td>
+                <td>{{ row.test_accuracy|percent }}</td>
+                <td>{{ row.test_f1|percent }}</td>
+                <td>{{ row.test_roc_auc|percent }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="performance-note"><i class="bi bi-info-circle" aria-hidden="true"></i> {{ performance.note }} Evaluation values are holdout-test results for the selected algorithm. Cross-validated F1 was used to select the model.</p>
+  {% else %}
+  <div class="empty-state empty-state-compact">
+    <span class="empty-icon"><i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i></span>
+    <h3>Performance data unavailable</h3>
+    <p>{{ performance.reason }} The dashboard does not substitute placeholder metrics.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block vendor_scripts %}
+{% if stats.total %}
+<script src="{{ url_for('static', filename='vendor/chartjs/chart.umd.min.js') }}"></script>
+{% endif %}
+{% endblock %}
