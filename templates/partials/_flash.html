@@ -1,0 +1,21 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% set icons = {
+      'success': 'check-circle-fill',
+      'danger': 'exclamation-octagon-fill',
+      'warning': 'exclamation-triangle-fill',
+      'info': 'info-circle-fill',
+      'message': 'info-circle-fill'
+    } %}
+    <div class="flash-stack" aria-live="polite">
+      {% for category, message in messages %}
+        {% set alert_class = category if category in ['success', 'danger', 'warning', 'info'] else 'info' %}
+        <div class="alert alert-{{ alert_class }} alert-dismissible fade show app-alert" role="alert">
+          <i class="bi bi-{{ icons.get(alert_class, 'info-circle-fill') }} app-alert-icon" aria-hidden="true"></i>
+          <span>{{ message }}</span>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
