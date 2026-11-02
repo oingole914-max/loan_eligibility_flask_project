@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field_error, invalid_class %}
+
+{% block title %}Administrator sign in — {{ app_name }}{% endblock %}
+{% block body_class %}auth-page admin-auth-page{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="container">
+    <div class="auth-shell auth-shell-admin">
+      <div class="row g-0">
+        <div class="col-lg-5 d-none d-lg-block">
+          <aside class="auth-aside auth-aside-admin">
+            <div class="auth-aside-content">
+              <span class="auth-aside-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+              <span class="section-kicker section-kicker-light">Restricted portal</span>
+              <h2>Operational oversight for the prediction workspace.</h2>
+              <p>Administrators can review aggregate eligibility statistics, inspect the model evaluation report and manage saved applications.</p>
+              <ul class="auth-benefits">
+                <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Live application totals and distribution</li>
+                <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Real holdout metrics and confusion matrix</li>
+                <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Search, inspect, export and delete records</li>
+              </ul>
+            </div>
+            <div class="auth-aside-footer">
+              <i class="bi bi-lock-fill" aria-hidden="true"></i>
+              <span>Role-based access control</span>
+            </div>
+          </aside>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="auth-form-panel">
+            <div class="auth-form-inner">
+              <span class="section-kicker">Administrator access</span>
+              <h1 class="auth-title">Admin sign in</h1>
+              <p class="auth-subtitle">Use an account with the administrator role.</p>
+
+              {% if current_user.is_authenticated and not current_user.is_admin %}
+              <div class="alert alert-warning app-alert" role="alert">
+                <i class="bi bi-person-exclamation app-alert-icon" aria-hidden="true"></i>
+                <span>You are currently signed in as a customer. Signing in with an administrator account will replace this session.</span>
+              </div>
+              {% endif %}
+
+              {% if errors.form %}
+              <div class="alert alert-danger app-alert" role="alert">
+                <i class="bi bi-exclamation-octagon-fill app-alert-icon" aria-hidden="true"></i>
+                <span>{{ errors.form }}</span>
+              </div>
+              {% endif %}
+
+              <form method="post" action="{{ url_for('auth.admin_login') }}" data-loading-form novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                  <label for="adminEmail" class="form-label">Administrator email</label>
+                  <div class="input-icon-group">
+                    <i class="bi bi-envelope-at" aria-hidden="true"></i>
+                    <input type="email" class="form-control{{ invalid_class(errors, 'email') }}" id="adminEmail" name="email" value="{{ email_value }}" autocomplete="username" required maxlength="190" placeholder="admin@example.com" aria-invalid="{{ 'true' if errors.email else 'false' }}">
+                  </div>
+                  {{ field_error(errors, 'email') }}
+                </div>
+
+                <div class="mb-4">
+                  <label for="adminPassword" class="form-label">Password</label>
+                  <div class="input-icon-group input-icon-group-action">
+                    <i class="bi bi-lock" aria-hidden="true"></i>
+                    <input type="password" class="form-control{{ invalid_class(errors, 'password') }}" id="adminPassword" name="password" autocomplete="current-password" required maxlength="128" placeholder="Enter administrator password" aria-invalid="{{ 'true' if errors.password else 'false' }}">
+                    <button class="password-toggle" type="button" data-toggle-password="adminPassword" aria-label="Show password"><i class="bi bi-eye" aria-hidden="true"></i></button>
+                  </div>
+                  {{ field_error(errors, 'password') }}
+                </div>
+
+                <button class="btn btn-admin btn-lg w-100" type="submit" data-submit-button>
+                  <span class="btn-label">Open admin dashboard</span>
+                  <span class="btn-spinner spinner-border spinner-border-sm" aria-hidden="true"></span>
+                </button>
+              </form>
+
+              <div class="admin-login-help">
+                <i class="bi bi-key" aria-hidden="true"></i>
+                <div>
+                  <strong>First-time setup</strong>
+                  <p>Administrator accounts are created from the command line. See the README for the <code>flask create-admin</code> command.</p>
+                </div>
+              </div>
+
+              <p class="auth-switch"><a href="{{ url_for('auth.login') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Return to customer sign in</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
