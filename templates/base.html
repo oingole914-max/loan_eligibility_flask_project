@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A machine-learning decision-support tool that estimates loan eligibility from applicant, income and credit details.">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}{{ app_name }} — Loan Eligibility Prediction{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  {% block nav %}
+  <nav class="navbar navbar-expand-lg app-navbar sticky-top" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand app-brand" href="{{ url_for('main.home') }}">
+        <span class="brand-mark" aria-hidden="true"><i class="bi bi-graph-up-arrow"></i></span>
+        <span class="brand-copy">
+          <span class="brand-name">{{ app_name }}</span>
+          <small class="brand-tagline">Eligibility intelligence</small>
+        </span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#primaryNav" aria-controls="primaryNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="primaryNav">
+        <ul class="navbar-nav mx-auto mb-3 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'main.home' %}active{% endif %}" href="{{ url_for('main.home') }}">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'applications.apply' %}active{% endif %}" href="{{ url_for('applications.apply') }}">Check eligibility</a>
+          </li>
+          {% if current_user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint in ['applications.history', 'applications.detail'] %}active{% endif %}" href="{{ url_for('applications.history') }}">My applications</a>
+          </li>
+          {% endif %}
+          {% if current_user.is_authenticated and current_user.is_admin %}
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">Admin</a>
+          </li>
+          {% endif %}
+        </ul>
+
+        <div class="d-flex align-items-center gap-2 nav-auth">
+          {% if current_user.is_authenticated %}
+            <div class="dropdown">
+              <button class="btn user-menu" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="avatar" aria-hidden="true">{{ current_user.full_name|initials }}</span>
+                <span class="user-menu-copy">
+                  <span class="user-menu-name">{{ current_user.full_name }}</span>
+                  <span class="user-menu-role">{{ 'Administrator' if current_user.is_admin else 'Customer' }}</span>
+                </span>
+                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end app-dropdown">
+                <li>
+                  <div class="dropdown-account">
+                    <span class="dropdown-account-name">{{ current_user.full_name }}</span>
+                    <span class="dropdown-account-email">{{ current_user.email }}</span>
+                  </div>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ url_for('applications.history') }}"><i class="bi bi-clock-history"></i> Application history</a></li>
+                {% if current_user.is_admin %}
+                <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-speedometer2"></i> Admin dashboard</a></li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{{ url_for('auth.logout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right"></i> Sign out</button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+          {% else %}
+            <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Sign in</a>
+            <a class="btn btn-brand" href="{{ url_for('auth.register') }}">Create account</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+  {% endblock %}
+
+  <main id="main-content">
+    <div class="container flash-container">
+      {% include "partials/_flash.html" %}
+    </div>
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}
+  <footer class="app-footer">
+    <div class="container">
+      <div class="row gy-4 align-items-start">
+        <div class="col-lg-5">
+          <a class="app-brand footer-brand" href="{{ url_for('main.home') }}">
+            <span class="brand-mark" aria-hidden="true"><i class="bi bi-graph-up-arrow"></i></span>
+            <span class="brand-copy">
+              <span class="brand-name">{{ app_name }}</span>
+              <small class="brand-tagline">Eligibility intelligence</small>
+            </span>
+          </a>
+          <p class="footer-copy">A BCA Semester V academic project demonstrating an end-to-end machine-learning workflow with Flask, scikit-learn and a relational database.</p>
+        </div>
+        <div class="col-6 col-lg-3">
+          <h2 class="footer-heading">Explore</h2>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('main.home') }}">Home</a></li>
+            <li><a href="{{ url_for('applications.apply') }}">Check eligibility</a></li>
+            {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('applications.history') }}">Application history</a></li>
+            {% else %}
+            <li><a href="{{ url_for('auth.register') }}">Create account</a></li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="col-6 col-lg-4">
+          <h2 class="footer-heading">Access</h2>
+          <ul class="footer-links">
+            {% if not current_user.is_authenticated %}
+            <li><a href="{{ url_for('auth.login') }}">Customer sign in</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('auth.admin_login') }}">Administrator sign in</a></li>
+            <li><a href="{{ url_for('main.health') }}">Service health</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="mb-0">© {{ current_year }} {{ app_name }} · Academic demonstration project.</p>
+        <p class="mb-0">Not a bank. Not financial advice. Never use this model as the sole basis for a lending decision.</p>
+      </div>
+    </div>
+  </footer>
+  {% endblock %}
+
+  <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+  {% block vendor_scripts %}{% endblock %}
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
