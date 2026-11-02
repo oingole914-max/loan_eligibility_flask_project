@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field_error, invalid_class %}
+
+{% block title %}Sign in — {{ app_name }}{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="container">
+    <div class="auth-shell">
+      <div class="row g-0">
+        <div class="col-lg-5 d-none d-lg-block">
+          <aside class="auth-aside">
+            <div class="auth-aside-content">
+              <span class="auth-aside-icon"><i class="bi bi-shield-lock" aria-hidden="true"></i></span>
+              <span class="section-kicker section-kicker-light">Secure access</span>
+              <h2>Your assessments, kept private to your account.</h2>
+              <p>Sign in to submit a new eligibility check or revisit the applications you have already saved.</p>
+              <ul class="auth-benefits">
+                <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Password-protected application history</li>
+                <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Full result summaries with probability</li>
+                <li><i class="bi bi-check2-circle" aria-hidden="true"></i> Search, filter and review past outcomes</li>
+              </ul>
+            </div>
+            <div class="auth-aside-footer">
+              <span>{{ model_info.model_name or 'Saved model' }}</span>
+              <span class="dot-separator" aria-hidden="true"></span>
+              <span>{{ model_info.feature_count or 11 }} input features</span>
+            </div>
+          </aside>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="auth-form-panel">
+            <div class="auth-form-inner">
+              <span class="section-kicker">Customer portal</span>
+              <h1 class="auth-title">Welcome back</h1>
+              <p class="auth-subtitle">Sign in to continue to your loan eligibility workspace.</p>
+
+              {% if errors.form %}
+              <div class="alert alert-danger app-alert" role="alert">
+                <i class="bi bi-exclamation-octagon-fill app-alert-icon" aria-hidden="true"></i>
+                <span>{{ errors.form }}</span>
+              </div>
+              {% endif %}
+
+              <form method="post" action="{{ url_for('auth.login') }}" data-loading-form novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="next" value="{{ next_url }}">
+
+                <div class="mb-3">
+                  <label for="loginEmail" class="form-label">Email address</label>
+                  <div class="input-icon-group">
+                    <i class="bi bi-envelope" aria-hidden="true"></i>
+                    <input type="email" class="form-control{{ invalid_class(errors, 'email') }}" id="loginEmail" name="email" value="{{ email_value }}" autocomplete="email" required maxlength="190" placeholder="you@example.com" aria-describedby="loginEmailError" aria-invalid="{{ 'true' if errors.email else 'false' }}">
+                  </div>
+                  <div id="loginEmailError">{{ field_error(errors, 'email') }}</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="loginPassword" class="form-label">Password</label>
+                  <div class="input-icon-group input-icon-group-action">
+                    <i class="bi bi-lock" aria-hidden="true"></i>
+                    <input type="password" class="form-control{{ invalid_class(errors, 'password') }}" id="loginPassword" name="password" autocomplete="current-password" required maxlength="128" placeholder="Enter your password" aria-describedby="loginPasswordError" aria-invalid="{{ 'true' if errors.password else 'false' }}">
+                    <button class="password-toggle" type="button" data-toggle-password="loginPassword" aria-label="Show password"><i class="bi bi-eye" aria-hidden="true"></i></button>
+                  </div>
+                  <div id="loginPasswordError">{{ field_error(errors, 'password') }}</div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="on" id="rememberMe" name="remember">
+                    <label class="form-check-label" for="rememberMe">Keep me signed in</label>
+                  </div>
+                  <a class="small-link" href="{{ url_for('auth.admin_login') }}">Administrator sign in</a>
+                </div>
+
+                <button class="btn btn-brand btn-lg w-100" type="submit" data-submit-button>
+                  <span class="btn-label">Sign in</span>
+                  <span class="btn-spinner spinner-border spinner-border-sm" aria-hidden="true"></span>
+                </button>
+              </form>
+
+              <p class="auth-switch">New to {{ app_name }}? <a href="{{ url_for('auth.register', next=next_url or None) }}">Create an account</a></p>
+
+              <div class="auth-security-note">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span>Passwords are stored as salted hashes. This is an academic project — do not reuse your banking password.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
