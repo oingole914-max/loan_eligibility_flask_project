@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Application {{ application.reference }} — {{ app_name }}{% endblock %}
+{% block body_class %}result-page{% endblock %}
+
+{% block content %}
+<section class="page-section result-section">
+  <div class="container">
+    <div class="page-head result-page-head">
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb page-breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.home') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ back_url }}">{{ 'Admin applications' if admin_view else 'My applications' }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ application.reference }}</li>
+          </ol>
+        </nav>
+        <span class="section-kicker">{{ 'Assessment complete' if is_new else 'Saved assessment' }}</span>
+        <h1 class="page-title">Prediction result</h1>
+        <p class="page-subtitle">Application {{ application.reference }} · {{ application.created_at|datetime }}</p>
+      </div>
+      <div class="page-head-actions no-print">
+        <a class="btn btn-ghost" href="{{ back_url }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back</a>
+        <a class="btn btn-brand" href="{{ url_for('applications.apply') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> New assessment</a>
+      </div>
+    </div>
+
+    {% if admin_view %}
+    <div class="alert alert-info app-alert admin-view-alert no-print" role="status">
+      <i class="bi bi-shield-lock-fill app-alert-icon" aria-hidden="true"></i>
+      <span>Administrator view. This application belongs to <strong>{{ application.user.full_name }}</strong> ({{ application.user.email }}).</span>
+    </div>
+    {% endif %}
+
+    <div class="result-card {{ 'result-eligible' if application.is_eligible else 'result-ineligible' }}" data-reveal>
+      <div class="result-accent" aria-hidden="true"></div>
+      <div class="result-main">
+        <div class="result-score-block">
+          <div class="score-ring" style="--score: {{ (application.eligibility_probability * 100)|round(1) }}; --ring-color: {{ '#15805a' if application.is_eligible else '#bc3f3b' }};">
+            <div class="score-ring-inner">
+              <span class="score-value">{{ application.eligibility_probability|percent }}</span>
+              <span class="score-label">Eligibility<br>probability</span>
+            </div>
+          </div>
+          <span class="score-caption">Probability of class “Eligible”</span>
+        </div>
+
+        <div class="result-copy">
+          <span class="result-status-badge {{ 'badge-eligible' if application.is_eligible else 'badge-ineligible' }}">
+            <i class="bi {{ 'bi-check-circle-fill' if application.is_eligible else 'bi-x-circle-fill' }}" aria-hidden="true"></i>
+            {{ application.eligibility_label }}
+          </span>
+          <h2 class="result-title">
+            {% if application.is_eligible %}
+              This application is likely to be eligible.
+            {% else %}
+              This application is not classified as eligible.
+            {% endif %}
+          </h2>
+          <p class="result-lead">
+            {% if application.is_eligible %}
+              The saved pipeline placed this application in the eligible class. The probability shown is the model's estimated likelihood for that class — not a guarantee of approval.
+            {% else %}
+              The saved pipeline placed this application in the not-eligible class. A different set of circumstances or a real lender's full review could produce a different outcome.
+            {% endif %}
+          </p>
+
+          <div class="result-probability-grid">
+            <div class="probability-stat">
+              <span>Eligibility probability</span>
+              <strong>{{ application.eligibility_probability|percent }}</strong>
+              <small>Model probability for the eligible class</small>
+            </div>
+            <div class="probability-stat">
+              <span>Prediction confidence</span>
+              <strong>{{ application.prediction_confidence|percent }}</strong>
+              <small>Probability attached to the predicted class</small>
+            </div>
+            <div class="probability-stat">
+              <span>Decision threshold</span>
+              <strong>50.0%</strong>
+              <small>Standard binary classification threshold</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-meta-bar">
+        <div class="result-meta-item">
+          <span>Model</span>
+          <strong>{{ application.model_name }}</strong>
+        </div>
+        <div class="result-meta-item">
+          <span>Assessment reference</span>
+          <strong>{{ application.reference }}</strong>
+        </div>
+        <div class="result-meta-item">
+          <span>Predicted at</span>
+          <strong>{{ application.created_at|datetime }}</strong>
+        </div>
+        <div class="result-meta-item">
+          <span>Saved to</span>
+          <strong>{{ application.user.email }}</strong>
+        </div>
+        <div class="result-meta-actions no-print">
+          <button type="button" class="btn btn-soft" data-print-page><i class="bi bi-printer" aria-hidden="true"></i> Print result</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 result-details-row">
+      <div class="col-lg-8">
+        <div class="detail-card">
+          <div class="detail-card-head">
+            <h2>Applicant information summary</h2>
+            <span class="detail-ref">{{ application.applicant_name }}</span>
+          </div>
+
+          <div class="row g-0 detail-groups">
+            <div class="col-md-6 detail-group">
+              <h3><i class="bi bi-person-vcard" aria-hidden="true"></i> Applicant profile</h3>
+              <dl class="data-list">
+                <div><dt>Full name</dt><dd>{{ application.applicant_name }}</dd></div>
+                <div><dt>Account email</dt><dd>{{ application.user.email }}</dd></div>
+                <div><dt>Gender</dt><dd>{{ application.Gender }}</dd></div>
+                <div><dt>Marital status</dt><dd>{{ 'Married' if application.Married == 'Yes' else 'Not married' }}</dd></div>
+                <div><dt>Dependents</dt><dd>{{ application.Dependents }}</dd></div>
+                <div><dt>Education</dt><dd>{{ application.Education }}</dd></div>
+                <div><dt>Self-employment</dt><dd>{{ 'Yes' if application.Self_Employed == 'Yes' else 'No' }}</dd></div>
+              </dl>
+            </div>
+
+            <div class="col-md-6 detail-group">
+              <h3><i class="bi bi-cash-stack" aria-hidden="true"></i> Income and loan</h3>
+              <dl class="data-list">
+                <div><dt>Applicant income</dt><dd>{{ application.ApplicantIncome|inr }} <small>/ month</small></dd></div>
+                <div><dt>Co-applicant income</dt><dd>{{ application.CoapplicantIncome|inr }} <small>/ month</small></dd></div>
+                <div><dt>Household income</dt><dd>{{ (application.ApplicantIncome + application.CoapplicantIncome)|inr }} <small>/ month</small></dd></div>
+                <div><dt>Loan amount</dt><dd>{{ application.LoanAmount|inr_thousands }} <small>(model value {{ application.LoanAmount|number(1) }})</small></dd></div>
+                <div><dt>Loan term</dt><dd>{{ application.Loan_Amount_Term|loan_term }}</dd></div>
+                <div><dt>Property area</dt><dd>{{ application.Property_Area }}</dd></div>
+                <div>
+                  <dt>Credit history</dt>
+                  <dd>
+                    {% if application.Credit_History == 1 %}
+                    <span class="inline-status inline-status-positive"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Meets historical guidelines</span>
+                    {% else %}
+                    <span class="inline-status inline-status-negative"><i class="bi bi-x-circle-fill" aria-hidden="true"></i> Does not meet guidelines</span>
+                    {% endif %}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-card result-disclaimer-card">
+          <div class="detail-card-head">
+            <h2><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Important limitations</h2>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="mini-info">
+                <strong>Not an approval</strong>
+                <p>This is a preliminary statistical prediction, not a loan approval, rejection, rate or offer.</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mini-info">
+                <strong>Limited training data</strong>
+                <p>The model learned from a small historical dataset and may reflect biases present in it.</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mini-info">
+                <strong>No bureau check</strong>
+                <p>No credit report, document, identity or affordability verification was performed.</p>
+              </div>
+            </div>
+          </div>
+          <p class="result-disclaimer-foot">For any real borrowing decision, consult a qualified lender and review the complete terms. Never rely on this academic model as the sole basis for credit.</p>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <aside class="result-side">
+          <div class="sidebar-card prediction-record">
+            <h2>Prediction record</h2>
+            <dl class="data-list compact">
+              <div><dt>Reference</dt><dd>{{ application.reference }}</dd></div>
+              <div><dt>Outcome</dt><dd><span class="inline-status {{ 'inline-status-positive' if application.is_eligible else 'inline-status-negative' }}">{{ application.eligibility_label }}</span></dd></div>
+              <div><dt>Eligibility probability</dt><dd>{{ application.eligibility_probability|percent }}</dd></div>
+              <div><dt>Confidence</dt><dd>{{ application.prediction_confidence|percent }}</dd></div>
+              <div><dt>Model</dt><dd>{{ application.model_name }}</dd></div>
+              <div><dt>Predicted at</dt><dd>{{ application.created_at|datetime }}</dd></div>
+            </dl>
+          </div>
+
+          <div class="sidebar-card result-next-steps">
+            <h2>What you can do next</h2>
+            <a class="next-step-link" href="{{ url_for('applications.apply') }}">
+              <span class="next-step-icon"><i class="bi bi-plus-lg" aria-hidden="true"></i></span>
+              <span><strong>Run another assessment</strong><small>Try a different set of application details.</small></span>
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+            <a class="next-step-link" href="{{ url_for('applications.history') }}">
+              <span class="next-step-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+              <span><strong>Open application history</strong><small>Search, filter and revisit saved results.</small></span>
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+            {% if admin_view %}
+            <a class="next-step-link" href="{{ url_for('admin.applications') }}">
+              <span class="next-step-icon"><i class="bi bi-table" aria-hidden="true"></i></span>
+              <span><strong>Back to management</strong><small>Return to the administrator application table.</small></span>
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+            {% endif %}
+          </div>
+
+          <div class="sidebar-card sidebar-disclaimer">
+            <span class="sidebar-label"><i class="bi bi-info-circle" aria-hidden="true"></i> Reading the probability</span>
+            <p class="mb-0">The model assigns each application a probability for the eligible class. A probability of 50% or more is classified as eligible; below 50% is classified as not eligible. Probabilities near the threshold should be treated as uncertain.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
