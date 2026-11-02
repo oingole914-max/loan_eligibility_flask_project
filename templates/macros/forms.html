@@ -1,0 +1,21 @@
+{% macro invalid_class(errors, name) -%}
+  {%- if errors and errors.get(name) %} is-invalid{% endif -%}
+{%- endmacro %}
+
+{% macro field_error(errors, name) -%}
+  {%- if errors and errors.get(name) %}
+    <div class="invalid-feedback d-block">{{ errors.get(name) }}</div>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro selected(value, current) -%}
+  {%- if (value|string) == (current|string) %} selected{% endif -%}
+{%- endmacro %}
+
+{% macro checked(value, current) -%}
+  {%- if (value|string) == (current|string) %} checked{% endif -%}
+{%- endmacro %}
+
+{% macro aria_invalid(errors, name) -%}
+  {%- if errors and errors.get(name) %}true{% else %}false{% endif -%}
+{%- endmacro %}
