@@ -1,0 +1,138 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Application management — {{ app_name }}{% endblock %}
+{% block admin_bar_title %}Application management{% endblock %}
+
+{% block content %}
+<div class="admin-page-head">
+  <div>
+    <span class="section-kicker">Records</span>
+    <h1 class="admin-page-title">Application management</h1>
+    <p class="admin-page-subtitle">Search every saved assessment, inspect its prediction details or remove a record.</p>
+  </div>
+  <div class="admin-page-actions">
+    <a class="btn btn-ghost" href="{{ url_for('admin.export_applications', q=query, status=status) }}"><i class="bi bi-download" aria-hidden="true"></i> Export CSV</a>
+    <a class="btn btn-brand" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-grid-1x2" aria-hidden="true"></i> Dashboard</a>
+  </div>
+</div>
+
+<div class="admin-filter-card">
+  <form method="get" action="{{ url_for('admin.applications') }}" class="row g-2 align-items-end">
+    <div class="col-lg-6">
+      <label for="adminSearch" class="form-label">Search applications</label>
+      <div class="input-icon-group">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input type="search" class="form-control" id="adminSearch" name="q" value="{{ query }}" maxlength="120" placeholder="Applicant name, email, or application ID">
+      </div>
+    </div>
+    <div class="col-sm-5 col-lg-2">
+      <label for="adminStatus" class="form-label">Outcome</label>
+      <select class="form-select" id="adminStatus" name="status">
+        <option value="all"{{ ' selected' if status == 'all' }}>All outcomes</option>
+        <option value="eligible"{{ ' selected' if status == 'eligible' }}>Eligible</option>
+        <option value="not_eligible"{{ ' selected' if status == 'not_eligible' }}>Not eligible</option>
+      </select>
+    </div>
+    <div class="col-sm-4 col-lg-2">
+      <button type="submit" class="btn btn-brand w-100"><i class="bi bi-funnel" aria-hidden="true"></i> Apply</button>
+    </div>
+    <div class="col-sm-3 col-lg-2">
+      <a class="btn btn-ghost w-100" href="{{ url_for('admin.applications') }}"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="admin-card">
+  <div class="admin-card-head">
+    <div>
+      <h2>Saved applications</h2>
+      <p>{{ pagination.total }} record{{ 's' if pagination.total != 1 else '' }} {{ 'match' if pagination.total != 1 else 'matches' }} the current filter{{ 's' if (query or status != 'all') else '' }}.</p>
+    </div>
+    {% if query or status != 'all' %}
+    <span class="active-filter-pill"><i class="bi bi-funnel-fill" aria-hidden="true"></i> Filtered</span>
+    {% endif %}
+  </div>
+
+  {% if pagination.items %}
+  <div class="table-responsive">
+    <table class="table app-table admin-table align-middle">
+      <thead>
+        <tr>
+          <th scope="col">Reference</th>
+          <th scope="col">Applicant</th>
+          <th scope="col" class="d-none d-lg-table-cell">Income</th>
+          <th scope="col" class="d-none d-md-table-cell">Loan amount</th>
+          <th scope="col">Outcome</th>
+          <th scope="col" class="d-none d-xl-table-cell">Probability</th>
+          <th scope="col" class="d-none d-md-table-cell">Predicted at</th>
+          <th scope="col" class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in pagination.items %}
+        <tr>
+          <td><span class="mono-ref">{{ application.reference }}</span></td>
+          <td>
+            <div class="table-person">
+              <span class="table-avatar" aria-hidden="true">{{ application.applicant_name|initials }}</span>
+              <span>
+                <strong>{{ application.applicant_name }}</strong>
+                <small>{{ application.user.email if application.user else 'Account removed' }}</small>
+              </span>
+            </div>
+          </td>
+          <td class="d-none d-lg-table-cell">{{ (application.ApplicantIncome + application.CoapplicantIncome)|inr }}<small class="table-cell-note">monthly household</small></td>
+          <td class="d-none d-md-table-cell">{{ application.LoanAmount|inr_thousands }}<small class="table-cell-note">{{ application.Loan_Amount_Term|loan_term }}</small></td>
+          <td><span class="result-badge {{ 'badge-eligible' if application.is_eligible else 'badge-ineligible' }}"><span class="badge-dot" aria-hidden="true"></span> {{ application.eligibility_label }}</span></td>
+          <td class="d-none d-xl-table-cell">{{ application.eligibility_probability|percent }}</td>
+          <td class="d-none d-md-table-cell"><span class="table-date">{{ application.created_at|date }}<small>{{ application.created_at|datetime('%I:%M %p') }}</small></span></td>
+          <td class="text-end">
+            <div class="table-actions">
+              <a class="btn btn-sm btn-table" href="{{ url_for('admin.application_detail', application_id=application.id) }}" aria-label="View {{ application.reference }}"><i class="bi bi-eye" aria-hidden="true"></i><span class="d-none d-xxl-inline"> View</span></a>
+              <form method="post" action="{{ url_for('admin.delete_application', application_id=application.id) }}" class="d-inline" data-confirm="Delete {{ application.reference }}? This removes the application and its prediction permanently.">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-table-danger" aria-label="Delete {{ application.reference }}"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if pagination.pages > 1 %}
+  <nav class="app-pagination" aria-label="Admin application pages">
+    <span class="pagination-summary">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    <ul class="pagination mb-0">
+      <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+        <a class="page-link" href="{{ url_for('admin.applications', page=pagination.prev_num if pagination.has_prev else 1, q=query, status=status) }}" aria-label="Previous page"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+      </li>
+      {% for page_number in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+        {% if page_number %}
+        <li class="page-item {{ 'active' if page_number == pagination.page }}">
+          <a class="page-link" href="{{ url_for('admin.applications', page=page_number, q=query, status=status) }}" {% if page_number == pagination.page %}aria-current="page"{% endif %}>{{ page_number }}</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+      {% endfor %}
+      <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+        <a class="page-link" href="{{ url_for('admin.applications', page=pagination.next_num if pagination.has_next else pagination.pages, q=query, status=status) }}" aria-label="Next page"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <span class="empty-icon"><i class="bi bi-inbox" aria-hidden="true"></i></span>
+    <h3>{{ 'No applications match these filters' if pagination.total == 0 and (query or status != 'all') else 'No applications saved yet' }}</h3>
+    <p>{{ 'Try a different search term or outcome filter.' if query or status != 'all' else 'Applications submitted by customers will appear here with their real model outcomes.' }}</p>
+    {% if query or status != 'all' %}
+    <a class="btn btn-ghost" href="{{ url_for('admin.applications') }}"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Clear filters</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
