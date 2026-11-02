@@ -75,4 +75,5 @@ class Config:
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 
     DEBUG = env_bool("FLASK_DEBUG", False)
+    HOST = os.getenv("HOST", "127.0.0.1")
     PORT = int(os.getenv("PORT", "5000"))
